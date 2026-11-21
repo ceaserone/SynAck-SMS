@@ -76,21 +76,6 @@ class ExternalNavigator @Inject constructor(
         }
     }
 
-    fun openAppStoreForCallBlocker() =
-        openExternalActivity(
-            "https://play.google.com/store/apps/details?id=com.cuiet.blockCalls"
-        )
-
-    fun openAppStoreForCallControl() =
-        openExternalActivity(
-            "https://play.google.com/store/apps/details?id=com.flexaspect.android.everycallcontrol"
-        )
-
-    fun openAppStoreForSia() =
-        openExternalActivity(
-            "https://play.google.com/store/apps/details?id=org.mistergroup.shouldianswer"
-        )
-
     fun showSupport() {
         val intent = Intent(Intent.ACTION_SENDTO)
         intent.data = "mailto:".toUri()

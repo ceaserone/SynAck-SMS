@@ -50,12 +50,6 @@ class QkMigration @Inject constructor(
         // Migrate changelog version
         prefs.changelogVersion.set(prefs.version.get())
 
-        // Migrate from old SIA preference to blocking manager preference
-        if (prefs.sia.get()) {
-            prefs.blockingManager.set(Preferences.BLOCKING_MANAGER_SIA)
-            prefs.sia.delete()
-        }
-
         // Migrate blocked conversations into QK blocking client
         val addresses = conversationRepo.getBlockedConversations()
                 .flatMap { conversation -> conversation.recipients }
