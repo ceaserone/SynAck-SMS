@@ -37,7 +37,12 @@ jobs:
         run: |
           set -euo pipefail
           echo "ANDROID_HOME=$ANDROID_HOME"
-          sdkmanager --install "platforms;android-34" "build-tools;34.0.0"
+          SDK_MANAGER="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | sort -V | tail -n 1)"
+          if [[ -z "$SDK_MANAGER" ]]; then
+            echo "::error::Android sdkmanager is not installed on the runner"
+            exit 1
+          fi
+          "$SDK_MANAGER" --install "platforms;android-34" "build-tools;34.0.0"
 
       - name: Validate Gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
