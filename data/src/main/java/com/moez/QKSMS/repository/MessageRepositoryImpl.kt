@@ -650,9 +650,15 @@ open class MessageRepositoryImpl @Inject constructor(
     override fun sendMessage(message: Message): Collection<Message> {
         // Protect resends, delayed sends, replies and other entry points too.
         // Old queued plaintext SMS cannot bypass an enabled secure conversation.
-        if (message.isSms() && SecureSms.isProtected(message.address) &&
-            !SecureSms.isCiphertext(message.body)) {
-            Timber.w("Blocked a non-encrypted SMS send to a protected conversation")
+        val protectedRecipient = SecureSms.isProtected(message.address) ||
+            Realm.getDefaultInstance().use { realm ->
+                realm.where(Conversation::class.java)
+                    .equalTo("id", message.threadId)
+                    .findFirst()?.recipients?.any { SecureSms.isProtected(it.address) } ?: false
+            }
+        if (protectedRecipient && (!message.isSms() ||
+                !SecureSms.isAuthenticatedCiphertext(message.address, message.body))) {
+            Timber.w("Blocked unauthenticated or non-SMS send in protected conversation")
             return emptyList()
         }
         val retVal = mutableListOf<Message>()
