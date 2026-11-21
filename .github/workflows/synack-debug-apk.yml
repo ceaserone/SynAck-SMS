@@ -1,12 +1,23 @@
 name: SynAck SMS - Build Debug APK
 
+# Build only when manually requested or app/build inputs change on master.
+# Documentation, metadata, security-report and unrelated workflow changes do not trigger a build.
 on:
   workflow_dispatch:
   push:
     branches: [master]
-    paths-ignore:
-      - '**/*.md'
-      - 'LICENSE'
+    paths:
+      - 'presentation/**'
+      - 'data/**'
+      - 'domain/**'
+      - 'common/**'
+      - 'android-smsmms/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'gradle/**'
+      - '.github/workflows/synack-debug-apk.yml'
 
 permissions:
   contents: read
