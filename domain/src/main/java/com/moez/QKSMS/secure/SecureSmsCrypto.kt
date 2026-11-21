@@ -1,7 +1,6 @@
 package dev.octoshrimpy.quik.secure
 
 import java.nio.ByteBuffer
-import java.security.AlgorithmParameters
 import java.security.KeyFactory
 import java.security.KeyPair
 import java.security.KeyPairGenerator
@@ -33,6 +32,9 @@ object SecureSmsCrypto {
     private const val CONTEXT = "SynAck SMS ECDH AES-256-GCM v1"
     private const val AAD = "SynAck SMS encrypted text v1"
     private const val NONCE_LENGTH = 12
+    private val allowedCurveParams: ECParameterSpec by lazy {
+        (newIdentity().public as java.security.interfaces.ECPublicKey).params
+    }
 
     fun newIdentity(): KeyPair =
         KeyPairGenerator.getInstance("EC").run {
@@ -44,10 +46,10 @@ object SecureSmsCrypto {
         require(bytes.size in 80..160) { "Unexpected public-key size" }
         val key = KeyFactory.getInstance("EC").generatePublic(X509EncodedKeySpec(bytes))
         val actual = (key as java.security.interfaces.ECPublicKey).params
-        val expected = AlgorithmParameters.getInstance("EC").run {
-            init(ECGenParameterSpec("secp256r1"))
-            getParameterSpec(ECParameterSpec::class.java)
-        }
+        // AlgorithmParameters("EC") is Android API 26+. Derive the
+        // canonical curve spec from KeyPairGenerator("EC") instead, which
+        // works back to API 11 and keeps our minSdk 23 compatible.
+        val expected = allowedCurveParams
         require(actual.order == expected.order &&
                 actual.generator == expected.generator &&
                 actual.cofactor == expected.cofactor &&
