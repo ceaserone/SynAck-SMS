@@ -8,11 +8,6 @@ on:
         required: true
         type: boolean
         default: false
-  # Temporary one-time push trigger. The job executes ONLY for the exact request commit.
-  # This trigger will be removed after the import run.
-  push:
-    branches: [master]
-    paths: ['.github/workflows/synack-mms-import.yml']
 
 concurrency:
   group: one-time-mms-configs
@@ -20,8 +15,7 @@ concurrency:
 
 jobs:
   refresh:
-    if: >-
-      ${{ (github.event_name == 'workflow_dispatch' && inputs.refresh_mms_configs == true) || (github.event_name == 'push' && github.event.head_commit.message == 'ci: request one-time MMS config import') }}
+    if: ${{ inputs.refresh_mms_configs == true }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
