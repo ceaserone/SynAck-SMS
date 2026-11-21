@@ -2,6 +2,8 @@
 
 A privacy-focused Android SMS/MMS application maintained by SynAck Networks, forked from [QUIK](https://github.com/quik-sms/quik), itself based on QKSMS.
 
+Also before I get started, well before you get started maybe both...originally I made this for my wife and I...I wanted something private that I could send messages to my wife throughout the day and have them encrypted and encrypted to the point where nothing sees this message except for your carrier and your carrier gets an encrypted message to pass off to the other person that means no connecting to Google to update the files needed or anything along those lines not once does this connect to anything to download anything or to save messages nothing all I can say is don't lose your original key or you're not reading those messages... also this is all beta until otherwise noted with that you can proceed!
+
 ## Current capabilities
 
 - Regular SMS and carrier MMS, conversation management, notifications, scheduling and backups.
