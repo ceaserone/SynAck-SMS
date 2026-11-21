@@ -24,6 +24,7 @@ import android.provider.Telephony.Mms
 import android.provider.Telephony.MmsSms
 import android.provider.Telephony.Sms
 import dev.octoshrimpy.quik.extensions.joinTo
+import dev.octoshrimpy.quik.secure.SecureSms
 import io.realm.RealmList
 import io.realm.RealmObject
 import io.realm.annotations.Index
@@ -121,10 +122,12 @@ open class Message : RealmObject() {
                 .joinToString("\n") { text -> text }
         }
 
+        // Decrypt transiently when rendering only; SMS provider + Realm retain ciphertext.
+        val displayText = SecureSms.forDisplay(address, messageText)
         if (!withSubject)
-            return messageText
+            return displayText
 
-        return getCleansedSubject().joinTo(messageText, "\n")
+        return getCleansedSubject().joinTo(displayText, "\n")
     }
 
     // returns a boolean indicating if message has any text parts that are not whitespace only
@@ -143,7 +146,7 @@ open class Message : RealmObject() {
      * needs to be displayed, such as in the conversation view or in a notification
      */
     fun getSummary(): String = when {
-        isSms() -> body
+        isSms() -> SecureSms.forSummary(body)
 
         else -> {
             val sb = StringBuilder()

@@ -39,6 +39,7 @@ import dev.octoshrimpy.quik.common.util.FileLoggingTree
 import dev.octoshrimpy.quik.injection.AppComponentManager
 import dev.octoshrimpy.quik.injection.appComponent
 import dev.octoshrimpy.quik.interactor.SpeakThreads
+import dev.octoshrimpy.quik.secure.SecureSms
 import dev.octoshrimpy.quik.manager.ReferralManager
 import dev.octoshrimpy.quik.migration.QkMigration
 import dev.octoshrimpy.quik.migration.QkRealmMigration
@@ -80,6 +81,7 @@ class QKApplication : Application(), HasActivityInjector, HasBroadcastReceiverIn
 
     override fun onCreate() {
         super.onCreate()
+        SecureSms.initialize(this)
 
         // set translated "no messages" string for speakThreads interactor
         SpeakThreads.setNoMessagesString(getString(R.string.speak_no_messages))

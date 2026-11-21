@@ -62,6 +62,7 @@ import dev.octoshrimpy.quik.receiver.SendDelayedMessageReceiver.Companion.MESSAG
 import dev.octoshrimpy.quik.util.ImageUtils
 import dev.octoshrimpy.quik.util.PhoneNumberUtils
 import dev.octoshrimpy.quik.util.Preferences
+import dev.octoshrimpy.quik.secure.SecureSms
 import dev.octoshrimpy.quik.util.sha256
 import dev.octoshrimpy.quik.util.tryOrNull
 import io.reactivex.Flowable
@@ -450,6 +451,12 @@ open class MessageRepositoryImpl @Inject constructor(
     ): Collection<Message> {
         Timber.v("sending message(s)")
 
+        // Fail closed. Never silently send plaintext in a paired conversation.
+        val blockedReason = SecureSms.sendBlockReason(toAddresses, attachments.size, delayMs)
+        check(blockedReason == null) { blockedReason ?: "Secure sending is unavailable" }
+        val useSecure = toAddresses.any(SecureSms::isVerified)
+        val wireBody = if (useSecure) SecureSms.encrypt(toAddresses.single(), body) else body
+
         val parts = mutableListOf<com.google.android.mms.MMSPart>()
 
         if (attachments.isNotEmpty()) {
@@ -596,9 +603,10 @@ open class MessageRepositoryImpl @Inject constructor(
         // 3 stage sending process - stage 1, create records in os provider
         val group = (sendAsGroup && (toAddresses.size > 1))
         val messageUri = QkTransaction.createMessage(
-            context, subId, body, prefs.signature.get(),
+            context, subId, wireBody, if (useSecure) "" else prefs.signature.get(),
             toAddresses.map(phoneNumberUtils::normalizeNumber).toTypedArray(),
-            parts, group, prefs.longAsMms.get(), prefs.unicode.get()
+            parts, group, if (useSecure) false else prefs.longAsMms.get(),
+            if (useSecure) false else prefs.unicode.get()
         )
 
         if (messageUri == Uri.EMPTY) {
@@ -640,6 +648,13 @@ open class MessageRepositoryImpl @Inject constructor(
     }
 
     override fun sendMessage(message: Message): Collection<Message> {
+        // Protect resends, delayed sends, replies and other entry points too.
+        // Old queued plaintext SMS cannot bypass an enabled secure conversation.
+        if (message.isSms() && SecureSms.isProtected(message.address) &&
+            !SecureSms.isCiphertext(message.body)) {
+            Timber.w("Blocked a non-encrypted SMS send to a protected conversation")
+            return emptyList()
+        }
         val retVal = mutableListOf<Message>()
 
         tryOrNull(true) {
