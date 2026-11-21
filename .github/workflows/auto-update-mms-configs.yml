@@ -1,4 +1,5 @@
 name: SynAck SMS - One-Time MMS Config Refresh
+# One-time import requested from current master; do not enable scheduled execution.
 
 on:
   workflow_dispatch:
