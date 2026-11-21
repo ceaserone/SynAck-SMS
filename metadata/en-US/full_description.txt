@@ -8,7 +8,7 @@ Features:
 - Speech-to-text and text-to-speech capabilities
 - Attachments, notifications, and conversation management
 
-Encrypted SynAck-to-SynAck messages are planned, not yet implemented.
+Experimental opt-in encrypted one-to-one SMS is included, but is not independently audited or field-tested. Use verified pairing; normal SMS/MMS remains unencrypted.
 
 Source code and issues: https://github.com/ceaserone/SynAck-SMS
 Licensed under GPL-3.0; original upstream contributors retain their copyright notices.

@@ -28,6 +28,7 @@ import androidx.work.WorkManager
 import androidx.work.workDataOf
 import dagger.android.AndroidInjection
 import dev.octoshrimpy.quik.repository.MessageRepository
+import dev.octoshrimpy.quik.secure.SecureSms
 import dev.octoshrimpy.quik.worker.ReceiveSmsWorker
 import dev.octoshrimpy.quik.worker.ReceiveSmsWorker.Companion.INPUT_DATA_KEY_MESSAGE_ID
 import io.reactivex.Single
@@ -49,14 +50,21 @@ class SmsReceivedReceiver : BroadcastReceiver() {
                 .map {
                     Timber.v("onReceive() new sms")  // here so runs on io thread
 
+                    val address = messages[0].displayOriginatingAddress
+                    val body = messages.mapNotNull { it.displayMessageBody }.joinToString("")
+                    // Pairing packets are replaced with local notices. Valid repeated
+                    // encrypted SMS payloads are discarded before hitting the provider.
+                    val stored = SecureSms.handleIncoming(address, body) ?: return@map -1L
                     messageRepo.insertReceivedSms(
                         intent.extras?.getInt("subscription", -1) ?: -1,
-                        messages[0].displayOriginatingAddress,
-                        messages.mapNotNull { it.displayMessageBody }.reduce { body, new -> body + new },
-                        messages[0].timestampMillis
+                        address, stored, messages[0].timestampMillis
                     ).id
                 }
                 .subscribe({ messageId ->
+                    if (messageId < 0L) {
+                        pendingResult.finish()
+                        return@subscribe
+                    }
                     WorkManager.getInstance(context).enqueue(
                         OneTimeWorkRequestBuilder<ReceiveSmsWorker>()
                             .setInputData(workDataOf(INPUT_DATA_KEY_MESSAGE_ID to messageId))

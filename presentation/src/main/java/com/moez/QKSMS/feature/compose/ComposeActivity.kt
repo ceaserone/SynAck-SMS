@@ -81,6 +81,7 @@ import dev.octoshrimpy.quik.feature.compose.editing.ChipsAdapter
 import dev.octoshrimpy.quik.feature.contacts.ContactsActivity
 import dev.octoshrimpy.quik.model.Attachment
 import dev.octoshrimpy.quik.model.Recipient
+import dev.octoshrimpy.quik.secure.SecureSms
 import io.reactivex.Observable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -106,6 +107,9 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     @Inject lateinit var viewModelFactory: ViewModelProvider.Factory
 
     private lateinit var binding: ComposeActivityBinding
+
+    private var secureChatAddress: String? = null
+    private var secureChatSubId: Int = -1
 
     override val activityVisibleIntent: Subject<Boolean> = PublishSubject.create()
     override val chipsSelectedIntent: Subject<HashMap<String, String?>> = PublishSubject.create()
@@ -444,6 +448,17 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
 
         threadId.onNext(state.threadId)
 
+        // Only one-to-one conversations support Secure Chat v1.
+        secureChatAddress = if (state.editingMode) state.selectedChips.singleOrNull()?.address
+            else state.messages?.first?.recipients?.singleOrNull()?.address
+        secureChatSubId = state.subscription?.subscriptionId ?: -1
+        binding.toolbar.menu.findItem(R.id.secureChat)?.apply {
+            isVisible = secureChatAddress != null && state.selectedMessages == 0
+            title = if (secureChatAddress?.let(SecureSms::isVerified) == true)
+                getString(R.string.secure_chat_menu_active)
+            else getString(R.string.secure_chat_menu)
+        }
+
         title = when {
             state.selectedMessages > 0 -> getString(R.string.compose_title_selected, state.selectedMessages)
             state.query.isNotEmpty() -> state.query
@@ -766,6 +781,20 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == R.id.secureChat) {
+            secureChatAddress?.let { address ->
+                SecureChatDialogs.show(this, address, secureChatSubId) {
+                    binding.toolbar.menu.findItem(R.id.secureChat)?.title =
+                        if (SecureSms.isVerified(address))
+                            getString(R.string.secure_chat_menu_active)
+                        else getString(R.string.secure_chat_menu)
+                    // A just-verified conversation can now decrypt existing ciphertext
+                    // without waiting for a new Realm data-change notification.
+                    messageAdapter.notifyDataSetChanged()
+                }
+            }
+            return true
+        }
         optionsItemIntent.onNext(item.itemId)
         return true
     }

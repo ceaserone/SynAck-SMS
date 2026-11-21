@@ -13,5 +13,6 @@ Description: |
   SynAck SMS is a fork of QUIK/QKSMS with local message and number management,
   SMS/MMS support, scheduled sending, backup and restore, and local blocking.
 
-  Encrypted SynAck-to-SynAck messaging is planned, not currently available.
+  Experimental opt-in one-to-one encrypted SMS with verified pairing is included.
+  It has not yet passed independent cryptographic or two-phone field testing.
   This fork has not yet completed a full dependency and runtime security audit.
