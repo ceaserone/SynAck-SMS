@@ -210,14 +210,29 @@ object SecureSms {
 
     fun isCiphertext(text: String) = text.startsWith(DATA)
 
+    /** Validate the GCM tag, not merely the SYN2 prefix. */
+    private fun decryptVerified(address: String, wire: String): String {
+        require(isCiphertext(wire) && isVerified(address))
+        val ours = identity()
+        val remote = peer(address) ?: throw IllegalStateException("Unknown peer")
+        return SecureSmsCrypto.decrypt(ours.private, ours.public, remote,
+            decode(wire.removePrefix(DATA)))
+    }
+
+    fun isAuthenticatedCiphertext(address: String, wire: String): Boolean {
+        return try {
+            decryptVerified(address, wire)
+            true
+        } catch (_: Exception) {
+            false
+        }
+    }
+
     fun forDisplay(address: String, wire: String): String {
         if (!isCiphertext(wire)) return wire
         if (!isVerified(address)) return "[Secure message — verify pairing to read]"
         return try {
-            val ours = identity()
-            val remote = peer(address) ?: throw IllegalStateException("Unknown peer")
-            SecureSmsCrypto.decrypt(ours.private, ours.public, remote,
-                decode(wire.removePrefix(DATA)))
+            decryptVerified(address, wire)
         } catch (_: Exception) {
             "[Secure message — authentication failed or keys unavailable]"
         }
@@ -259,10 +274,16 @@ object SecureSms {
             return@synchronized "🔐 Secure Chat reply received. Compare safety codes to enable."
         }
 
-        if (!isCiphertext(wire) || !isVerified(address)) return@synchronized wire
-        // Authenticate before recording a replay nonce. Never log decrypted text.
-        val plain = forDisplay(address, wire)
-        if (plain.startsWith("[Secure message")) return@synchronized wire
+        if (!isCiphertext(wire)) {
+            // A verified contact can still send regular carrier SMS from another
+            // app. Make the downgrade obvious rather than implying it was secure.
+            return@synchronized if (isVerified(address))
+                "⚠ Unencrypted SMS from a paired contact:\n" + wire
+            else wire
+        }
+        if (!isVerified(address)) return@synchronized wire
+        // Authenticate before recording a replay nonce. Never log plaintext.
+        if (!isAuthenticatedCiphertext(address, wire)) return@synchronized wire
         val fingerprint = MessageDigest.getInstance("SHA-256")
             .digest(wire.toByteArray(Charsets.UTF_8)).take(12)
             .joinToString("") { "%02x".format(it.toInt() and 0xff) }
