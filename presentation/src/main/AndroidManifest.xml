@@ -166,7 +166,7 @@
         <receiver android:name=".receiver.MessageMarkReceiver" />
         <receiver
             android:name=".receiver.SpeakThreadsReceiver"
-            android:exported="true">
+            android:exported="false">
             <intent-filter>
                 <action android:name=".action.ACTION_SPEAK_MESSAGES" />
             </intent-filter>
