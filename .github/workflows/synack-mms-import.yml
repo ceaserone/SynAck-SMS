@@ -68,12 +68,14 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends aapt apktool unzip
           
-      - name: Download Google Messages APK to temporary runner folder
+      - name: Download Google-signed Messages APK to temporary runner folder (via mirror)
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/synack-mms-apk"
-          apkeep -a com.google.android.apps.messaging "$RUNNER_TEMP/synack-mms-apk"
+          # Google Play requires a private AAS authentication token.
+          # Use APKPure as transport only; the Google signing certificate is pinned below.
+          apkeep -d apk-pure -a com.google.android.apps.messaging "$RUNNER_TEMP/synack-mms-apk"
           find "$RUNNER_TEMP/synack-mms-apk" -maxdepth 2 -type f -printf '%p\n'
 
       - name: Extract MMS config resources (no APK checked into repo)
@@ -96,6 +98,26 @@ jobs:
             echo "::error::No APK found from Google Messages download"
             exit 1
           fi
+
+          # APKPure is a mirror, so verify both package identity and Google signing key.
+          expected_cert="cc75526d6c0f80ac3b3a84eb44838440dbbe6b124443a7c7d7bd19182ac022c9"
+          signer="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
+          if [[ -z "$signer" ]]; then
+            echo "::error::Missing Android apksigner; refusing unverified import"
+            exit 1
+          fi
+          package_name="$(aapt dump badging "$apk" | sed -n "s/^package: name='\\([^']*\\)'.*/\\1/p" | head -n1)"
+          if [[ "$package_name" != "com.google.android.apps.messaging" ]]; then
+            echo "::error::Unexpected APK package: $package_name"
+            exit 1
+          fi
+          signer_info="$("$signer" verify --print-certs "$apk")"
+          actual_cert="$(printf '%s\\n' "$signer_info" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1)"
+          if [[ "${actual_cert,,}" != "$expected_cert" ]]; then
+            echo "::error::APK signer does not match pinned Google Messages certificate"
+            exit 1
+          fi
+          echo "Verified Google Messages APK package and signing certificate."
 
           apktool d -f "$apk" -o "$RUNNER_TEMP/synack-mms-decompiled"
 
