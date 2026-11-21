@@ -1,5 +1,26 @@
-# Google Play Privacy Policy
+# SynAck SMS — Privacy and Security Notes
 
-I do not collect data. This applies to the following apps:
+SynAck SMS is an Android SMS/MMS application based on the open-source QUIK/QKSMS project.
 
-* https://play.google.com/store/apps/details?id=dev.octoshrimpy.quik
+## What the app handles
+- SMS and MMS message content, phone numbers, contact information, and attachments as needed to provide the messaging features.
+- Messages are exchanged through the cellular carrier's normal SMS/MMS infrastructure. **End-to-end encrypted SynAck Secure Chat is planned, not yet implemented.** Normal SMS/MMS content is not protected from the carrier by this app.
+- Messages may be stored in Android's system SMS/MMS provider and an app-local Realm database.
+
+## Network and third parties
+- Optional third-party Call Control and Should I Answer integrations were removed.
+- MMS handling may involve connections to carrier-operated servers. Opening external links, support pages, or contact actions uses Android's normal system intents.
+- The on-device app does not download Google Messages to update carrier configurations. The one-time GitHub Actions import is developer-operated and manual-only.
+
+## Local diagnostic data
+- Optional diagnostic logging can create files in Downloads when enabled. Logs might contain sensitive diagnostic information.
+- SMS backup files are exported as plaintext JSON to a user-chosen storage location; treat them as sensitive and protect them accordingly.
+- Android-level data and notification permissions are required to operate as the default SMS app.
+
+## Status
+This project is under development. A repository static inventory and partial manual code review have been performed, **not** a complete dependency, APK or runtime security audit. Do not assume encrypted chats or guaranteed absence of external data transfers based on the current review.
+
+Source code: https://github.com/ceaserone/SynAck-SMS
+Issues: https://github.com/ceaserone/SynAck-SMS/issues
+
+The app retains upstream GPLv3 copyright notices and attribution.

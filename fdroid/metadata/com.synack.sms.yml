@@ -1,0 +1,17 @@
+PackageName: com.synack.sms
+Name: SynAck SMS
+Summary: Open-source Android SMS/MMS messaging
+License: GPL-3.0
+SourceCode: https://github.com/ceaserone/SynAck-SMS
+IssueTracker: https://github.com/ceaserone/SynAck-SMS/issues
+WebSite: ""
+Categories:
+  - Communication
+CurrentVersion: "4.3.7"
+CurrentVersionCode: 2239
+Description: |
+  SynAck SMS is a fork of QUIK/QKSMS with local message and number management,
+  SMS/MMS support, scheduled sending, backup and restore, and local blocking.
+
+  Encrypted SynAck-to-SynAck messaging is planned, not currently available.
+  This fork has not yet completed a full dependency and runtime security audit.
