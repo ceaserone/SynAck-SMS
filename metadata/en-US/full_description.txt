@@ -1,12 +1,14 @@
-Open source replacement to the stock SMS app on Android. A revival of QKSMS.
-## Features
-- Scheduled Messages
-- Message Backup
-- Speech to Text and Text to Speech integrated within the app
-- Message Blocking and Archiving
-- Voice Messages
-- Attachments of any type of file
-- Message Sorting
-- Delayed Sending
+SynAck SMS is an Android SMS/MMS application maintained by SynAck Networks and based on the open-source QUIK/QKSMS project.
 
-You can chat with the community over at <a href="https://matrix.to/#/#quik-sms:matrix.org">#quik-sms:matrix.org</a>
+Features:
+- SMS and carrier MMS messaging
+- Scheduled and delayed messages
+- Message backup and restore
+- Local number blocking, filters, and archiving
+- Speech-to-text and text-to-speech capabilities
+- Attachments, notifications, and conversation management
+
+Encrypted SynAck-to-SynAck messages are planned, not yet implemented.
+
+Source code and issues: https://github.com/ceaserone/SynAck-SMS
+Licensed under GPL-3.0; original upstream contributors retain their copyright notices.

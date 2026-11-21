@@ -23,7 +23,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import dagger.android.AndroidInjection
-import dev.octoshrimpy.quik.util.nonDebugPackageName
+import dev.octoshrimpy.quik.feature.compose.ComposeActivity
+import dev.octoshrimpy.quik.feature.main.MainActivity
 
 class StartActivityFromWidgetReceiver : BroadcastReceiver() {
     // why does this shim class exist rather than the widget launching activities more directly?
@@ -42,17 +43,16 @@ class StartActivityFromWidgetReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         AndroidInjection.inject(this, context)
 
-        var activityToStartName = intent.getStringExtra("activityToStart")
-
-        // protect against invalid launch activity
-        activityToStartName = when (activityToStartName) {
-            COMPOSE_ACTIVITY -> activityToStartName
-            MAIN_ACTIVITY -> activityToStartName
+        // Resolve actual classes directly: the install package is com.synack.sms,
+        // while the source namespace remains dev.octoshrimpy.quik.
+        val targetClass = when (intent.getStringExtra("activityToStart")) {
+            COMPOSE_ACTIVITY -> ComposeActivity::class.java
+            MAIN_ACTIVITY -> MainActivity::class.java
             else -> return
         }
 
         context.startActivity(
-            Intent(context, Class.forName(nonDebugPackageName(context.packageName) + activityToStartName))
+            Intent(context, targetClass)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK)
                 .putExtra("threadId", intent.getLongExtra("threadId", 0L))
         )
