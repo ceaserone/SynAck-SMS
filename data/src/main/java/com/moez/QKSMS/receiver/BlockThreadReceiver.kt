@@ -56,7 +56,7 @@ class BlockThreadReceiver : BroadcastReceiver() {
             .subscribeOn(Schedulers.io())
             .andThen(
                 markBlocked.buildObservable(
-                    MarkBlocked.Params(listOf(threadId), prefs.blockingManager.get(), null)
+                    MarkBlocked.Params(listOf(threadId), Preferences.BLOCKING_MANAGER_QKSMS, null)
                 )
             )
             .subscribe(

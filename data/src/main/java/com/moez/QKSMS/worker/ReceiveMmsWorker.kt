@@ -176,7 +176,7 @@ class ReceiveMmsWorker(appContext: Context, workerParams: WorkerParameters)
                                 messageRepo.markRead(listOf(message.threadId))
                                 conversationRepo.markBlocked(
                                     listOf(message.threadId),
-                                    prefs.blockingManager.get(),
+                                    Preferences.BLOCKING_MANAGER_QKSMS,
                                     action.reason
                                 )
                             }
