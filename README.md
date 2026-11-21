@@ -11,7 +11,7 @@ A privacy-focused Android SMS/MMS application maintained by SynAck Networks, for
 
 ## Development status
 
-**Secure SynAck-to-SynAck encrypted SMS is planned but is NOT implemented yet.** Do not rely on this fork to encrypt text messages until we implement and test it.
+**Experimental SynAck Secure Chat v1 code is included.** Verified one-to-one pairs can exchange authenticated encrypted SMS without a server. See [protocol and security limitations](security/SECURE_SMS_V1.md). This is **not independently audited or validated on two physical phones**, and must not be considered production-grade secure messaging yet.
 
 ## Security and compatibility
 

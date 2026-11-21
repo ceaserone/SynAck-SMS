@@ -4,7 +4,7 @@ SynAck SMS is an Android SMS/MMS application based on the open-source QUIK/QKSMS
 
 ## What the app handles
 - SMS and MMS message content, phone numbers, contact information, and attachments as needed to provide the messaging features.
-- Messages are exchanged through the cellular carrier's normal SMS/MMS infrastructure. **End-to-end encrypted SynAck Secure Chat is planned, not yet implemented.** Normal SMS/MMS content is not protected from the carrier by this app.
+- Messages are exchanged through the cellular carrier's normal SMS/MMS infrastructure. **Experimental, opt-in SynAck Secure Chat v1 encryption is implemented but not independently audited or field-tested.** Only properly paired and independently verified one-to-one text SMS are intended to be encrypted before carrier transmission. All other SMS/MMS remains ordinary carrier-visible messaging.
 - Messages may be stored in Android's system SMS/MMS provider and an app-local Realm database.
 
 ## Network and third parties
@@ -18,7 +18,7 @@ SynAck SMS is an Android SMS/MMS application based on the open-source QUIK/QKSMS
 - Android-level data and notification permissions are required to operate as the default SMS app.
 
 ## Status
-This project is under development. A repository static inventory and partial manual code review have been performed, **not** a complete dependency, APK or runtime security audit. Do not assume encrypted chats or guaranteed absence of external data transfers based on the current review.
+This project is under development. A repository static inventory and partial manual code review have been performed, **not** a complete dependency, APK or runtime security audit. Do not assume the experimental Secure Chat prototype has been proven secure on real devices, or that this review guarantees an absence of external data transfers. Read [Secure Chat v1 limitations](security/SECURE_SMS_V1.md).
 
 Source code: https://github.com/ceaserone/SynAck-SMS
 Issues: https://github.com/ceaserone/SynAck-SMS/issues
