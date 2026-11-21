@@ -105,7 +105,9 @@ jobs:
           echo "Selected base APK: $apk"
 
           # APKPure is a mirror, so verify both package identity and Google signing key.
+          # Both Google Messages certificate variants are independently listed by APKMirror.
           expected_cert="cc75526d6c0f80ac3b3a84eb44838440dbbe6b124443a7c7d7bd19182ac022c9"
+          expected_cert_alt="e8d0ae7cc3c4e0f3be9a8dd9a50667b3eaa54b4333b9bbb35a4151a7988ee26b"
           signer="$(find "$ANDROID_HOME/build-tools" -name apksigner -type f | sort -V | tail -n 1)"
           if [[ -z "$signer" ]]; then
             echo "::error::Missing Android apksigner; refusing unverified import"
@@ -118,8 +120,9 @@ jobs:
           fi
           signer_info="$("$signer" verify --print-certs "$apk")"
           actual_cert="$(printf '%s\n' "$signer_info" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1)"
-          if [[ "${actual_cert,,}" != "$expected_cert" ]]; then
-            echo "::error::APK signer does not match pinned Google Messages certificate"
+          echo "Observed APK signing certificate SHA-256: $actual_cert"
+          if [[ "${actual_cert,,}" != "$expected_cert" && "${actual_cert,,}" != "$expected_cert_alt" ]]; then
+            echo "::error::APK signer does not match either pinned Google Messages certificate"
             exit 1
           fi
           echo "Verified Google Messages APK package and signing certificate."
