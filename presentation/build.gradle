@@ -73,15 +73,6 @@ android {
             resValue("string", "application_id", "com.synack.sms.debug")
             signingConfig signingConfigs.debug
         }
-        fdroid {
-            minifyEnabled true
-            shrinkResources true
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
-            matchingFallbacks = ['release']
-            applicationIdSuffix ".fdroid"
-            resValue("string", "application_id", "com.synack.sms.fdroid")
-        }
     }
 
     compileOptions {
@@ -111,7 +102,6 @@ android {
 configurations {
     debug
     release
-    fdroid
 }
 
 dependencies {
@@ -193,7 +183,6 @@ dependencies {
 
     // moshi
     implementation "com.squareup.moshi:moshi:$moshi_version"
-    debugImplementation "com.squareup.moshi:moshi-kotlin:$moshi_version"
     kapt "com.squareup.moshi:moshi-kotlin-codegen:$moshi_version"
 
     // coroutines
