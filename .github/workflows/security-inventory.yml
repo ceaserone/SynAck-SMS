@@ -1,0 +1,37 @@
+name: SynAck SMS - Repository Security Inventory
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - 'security/**'
+      - '.github/workflows/security-inventory.yml'
+      - '**/*.kt'
+      - '**/*.java'
+      - '**/*.gradle'
+      - '**/AndroidManifest.xml'
+
+permissions:
+  contents: read
+
+jobs:
+  inventory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout tracked repository files
+        uses: actions/checkout@v4
+
+      - name: Scan and hash all tracked files
+        run: python3 security/audit.py
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: SynAck-SMS-security-inventory
+          path: |
+            security-report.md
+            security-inventory.json
+          if-no-files-found: error
+          retention-days: 30
