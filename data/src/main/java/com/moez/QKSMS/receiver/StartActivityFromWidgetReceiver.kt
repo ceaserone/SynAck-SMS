@@ -23,8 +23,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
 import dagger.android.AndroidInjection
-import dev.octoshrimpy.quik.feature.compose.ComposeActivity
-import dev.octoshrimpy.quik.feature.main.MainActivity
 
 class StartActivityFromWidgetReceiver : BroadcastReceiver() {
     // why does this shim class exist rather than the widget launching activities more directly?
@@ -43,16 +41,19 @@ class StartActivityFromWidgetReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         AndroidInjection.inject(this, context)
 
-        // Resolve actual classes directly: the install package is com.synack.sms,
-        // while the source namespace remains dev.octoshrimpy.quik.
-        val targetClass = when (intent.getStringExtra("activityToStart")) {
-            COMPOSE_ACTIVITY -> ComposeActivity::class.java
-            MAIN_ACTIVITY -> MainActivity::class.java
+        // The APK id is com.synack.sms[.debug], but the compiled activity
+        // classes are still under the original dev.octoshrimpy.quik namespace.
+        // Use a whitelisted explicit component; the data module must not
+        // import Activity classes from the presentation module.
+        val activityClassName = when (intent.getStringExtra("activityToStart")) {
+            COMPOSE_ACTIVITY -> "dev.octoshrimpy.quik.feature.compose.ComposeActivity"
+            MAIN_ACTIVITY -> "dev.octoshrimpy.quik.feature.main.MainActivity"
             else -> return
         }
 
         context.startActivity(
-            Intent(context, targetClass)
+            Intent()
+                .setClassName(context.packageName, activityClassName)
                 .setFlags(FLAG_ACTIVITY_NEW_TASK)
                 .putExtra("threadId", intent.getLongExtra("threadId", 0L))
         )
