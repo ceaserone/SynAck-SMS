@@ -18,24 +18,20 @@
  */
 package dev.octoshrimpy.quik.feature.blocking.messages
 
-import android.content.Context
 import android.graphics.Typeface
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.core.view.isVisible
-import dev.octoshrimpy.quik.R
 import dev.octoshrimpy.quik.common.base.QkBindingViewHolder
 import dev.octoshrimpy.quik.common.base.QkRealmAdapter
 import dev.octoshrimpy.quik.common.util.DateFormatter
 import dev.octoshrimpy.quik.common.util.extensions.resolveThemeColor
 import dev.octoshrimpy.quik.databinding.BlockedListItemBinding
 import dev.octoshrimpy.quik.model.Conversation
-import dev.octoshrimpy.quik.util.Preferences
 import io.reactivex.subjects.PublishSubject
 import javax.inject.Inject
 
 class BlockedMessagesAdapter @Inject constructor(
-    private val context: Context,
     private val dateFormatter: DateFormatter
 ) : QkRealmAdapter<Conversation, QkBindingViewHolder<BlockedListItemBinding>>() {
 
@@ -78,15 +74,12 @@ class BlockedMessagesAdapter @Inject constructor(
         binding.title.text = conversation.getTitle()
         binding.date.text = dateFormatter.getConversationTimestamp(conversation.date)
 
-        binding.blocker.text = when (conversation.blockingClient) {
-            Preferences.BLOCKING_MANAGER_CC -> context.getString(R.string.blocking_manager_call_control_title)
-            Preferences.BLOCKING_MANAGER_SIA -> context.getString(R.string.blocking_manager_sia_title)
-            else -> null
-        }
-
+        // External blocking providers have been removed. Do not show stale
+        // Call Control / Should I Answer provider names for existing records.
+        binding.blocker.text = null
+        binding.blocker.isVisible = false
         binding.reason.text = conversation.blockReason
-        binding.blocker.isVisible = binding.blocker.text.isNotEmpty()
-        binding.reason.isVisible = binding.blocker.text.isNotEmpty()
+        binding.reason.isVisible = !conversation.blockReason.isNullOrBlank()
     }
 
     override fun getItemViewType(position: Int): Int {
