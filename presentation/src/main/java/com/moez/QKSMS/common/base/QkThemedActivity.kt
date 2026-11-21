@@ -20,10 +20,12 @@ package dev.octoshrimpy.quik.common.base
 
 import android.annotation.SuppressLint
 import android.app.ActivityManager
-import android.graphics.BitmapFactory
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Build
 import android.os.Bundle
 import android.view.View
+import androidx.core.content.ContextCompat
 import androidx.core.view.iterator
 import androidx.lifecycle.Lifecycle
 import com.uber.autodispose.android.lifecycle.scope
@@ -121,7 +123,13 @@ abstract class QkThemedActivity : QkActivity() {
 
         // Set the color for the recent apps title
         val toolbarColor = resolveThemeColor(R.attr.colorPrimary)
-        val icon = BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher)
+        // The SynAck launcher is a vector; BitmapFactory cannot decode XML vectors.
+        // Render it to a Bitmap so the Recents task uses our branding, not QUIK.
+        val icon = Bitmap.createBitmap(96, 96, Bitmap.Config.ARGB_8888)
+        ContextCompat.getDrawable(this, R.drawable.ic_synack_sms_launcher)?.apply {
+            setBounds(0, 0, icon.width, icon.height)
+            draw(Canvas(icon))
+        }
         val taskDesc = ActivityManager.TaskDescription(getString(R.string.app_name), icon, toolbarColor)
         setTaskDescription(taskDesc)
     }

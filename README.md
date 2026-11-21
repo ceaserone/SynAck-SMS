@@ -11,6 +11,13 @@ Also before I get started, well before you get started maybe both...originally I
 - Carrier MMS XML configurations bundled locally; the optional refresh is manual-only and requires review.
 - Debug APK builds on source changes or manual request via GitHub Actions.
 
+## Development setup
+
+- **English-only interface:** non-English Android string resources have been removed. Locale-specific carrier MMS settings are retained because they determine carrier behavior, not app language.
+- **No F-Droid repository or release publishing automation:** this branch is focused on building and testing installable debug APKs. Production releases will need signing and publishing configured separately.
+- **CI:** GitHub Actions builds a debug APK on relevant source changes or when manually started, and tests pull requests.
+- **Security:** the app keeps its local security inventory workflow and experimental Secure Chat protocol documentation.
+
 ## Development status
 
 **Experimental SynAck Secure Chat v1 code is included.** Verified one-to-one pairs can exchange authenticated encrypted SMS without a server. See [protocol and security limitations](security/SECURE_SMS_V1.md). This is **not independently audited or validated on two physical phones**, and must not be considered production-grade secure messaging yet.

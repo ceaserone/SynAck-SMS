@@ -59,3 +59,10 @@ keystore.p12
 config.yml
 *.jks
 
+
+# Generated or retired publishing artifacts
+/repo/
+/tmp/
+/fdroid/
+/metadata/
+/secrets.tar.enc
