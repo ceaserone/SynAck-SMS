@@ -69,6 +69,7 @@ import dev.octoshrimpy.quik.model.Message
 import dev.octoshrimpy.quik.model.MmsPart
 import dev.octoshrimpy.quik.model.Recipient
 import dev.octoshrimpy.quik.model.getText
+import dev.octoshrimpy.quik.secure.SecureSms
 import dev.octoshrimpy.quik.repository.ContactRepository
 import dev.octoshrimpy.quik.repository.ConversationRepository
 import dev.octoshrimpy.quik.repository.MessageRepository
@@ -1203,6 +1204,18 @@ class ComposeViewModel @Inject constructor(
                     false -> chips.map { chip -> chip.address }
                 }
                 val sendAsGroup = ((addresses.size > 1) && state.sendAsGroup)
+
+                // Never silently downgrade a paired contact to ordinary SMS or MMS.
+                val restriction = SecureSms.sendBlockReason(
+                    addresses, state.attachments.size,
+                    if (state.scheduled != 0L) 1 else delay
+                )
+                if (restriction != null) {
+                    AndroidSchedulers.mainThread().scheduleDirect {
+                        context.makeToast(restriction)
+                    }
+                    return@withLatestFrom false
+                }
 
                 var scheduled = false
 

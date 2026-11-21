@@ -116,4 +116,10 @@
         android:visible="false"
         app:showAsAction="always" />
 
+    <item
+        android:id="@+id/secureChat"
+        android:title="@string/secure_chat_menu"
+        android:visible="false"
+        app:showAsAction="never" />
+
 </menu>
