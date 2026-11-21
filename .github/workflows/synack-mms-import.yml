@@ -87,17 +87,22 @@ jobs:
           for archive in "$download_dir"/*.xapk; do
             unzip -oq "$archive" -d "$download_dir/extracted"
           done
-          apk="$download_dir/com.google.android.apps.messaging.apk"
-          if [[ ! -f "$apk" ]]; then
-            apk="$(find "$download_dir" -type f -name base.apk -print -quit)"
-          fi
-          if [[ -z "$apk" || ! -f "$apk" ]]; then
-            apk="$(find "$download_dir" -type f -name '*.apk' -print -quit)"
-          fi
-          if [[ -z "$apk" || ! -f "$apk" ]]; then
-            echo "::error::No APK found from Google Messages download"
+          # XAPK bundles contain split APKs (config.pt.apk etc.); select the base APK.
+          apk=""
+          while IFS= read -r -d '' candidate; do
+            badge="$(aapt dump badging "$candidate" 2>/dev/null | sed -n '1p' || true)"
+            if [[ "$badge" == *"name='com.google.android.apps.messaging'"* && "$badge" != *"split='"* ]]; then
+              apk="$candidate"
+              break
+            fi
+          done < <(find "$download_dir" -type f -name '*.apk' -print0)
+
+          if [[ -z "$apk" ]]; then
+            echo "::error::Could not locate base Google Messages APK (only splits found)"
+            find "$download_dir" -type f -maxdepth 3 -print
             exit 1
           fi
+          echo "Selected base APK: $apk"
 
           # APKPure is a mirror, so verify both package identity and Google signing key.
           expected_cert="cc75526d6c0f80ac3b3a84eb44838440dbbe6b124443a7c7d7bd19182ac022c9"
@@ -106,13 +111,13 @@ jobs:
             echo "::error::Missing Android apksigner; refusing unverified import"
             exit 1
           fi
-          package_name="$(aapt dump badging "$apk" | sed -n "s/^package: name='\\([^']*\\)'.*/\\1/p" | head -n1)"
-          if [[ "$package_name" != "com.google.android.apps.messaging" ]]; then
-            echo "::error::Unexpected APK package: $package_name"
+          badge="$(aapt dump badging "$apk" | sed -n '1p')"
+          if [[ "$badge" != *"name='com.google.android.apps.messaging'"* || "$badge" == *"split='"* ]]; then
+            echo "::error::Unexpected package identity or split APK"
             exit 1
           fi
           signer_info="$("$signer" verify --print-certs "$apk")"
-          actual_cert="$(printf '%s\\n' "$signer_info" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1)"
+          actual_cert="$(printf '%s\n' "$signer_info" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1)"
           if [[ "${actual_cert,,}" != "$expected_cert" ]]; then
             echo "::error::APK signer does not match pinned Google Messages certificate"
             exit 1
