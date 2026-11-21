@@ -118,14 +118,17 @@ jobs:
             echo "::error::Unexpected package identity or split APK"
             exit 1
           fi
+          # apksigner may list v3.0 and v3.1 rotated signers. Require at
+          # least one verified APK signer (not the source stamp) to match a
+          # pinned Google Messages certificate.
           signer_info="$("$signer" verify --print-certs "$apk")"
-          # Only public certificate metadata is printed, to diagnose signer parsing safely.
-          printf '%s\n' "$signer_info"
-          actual_cert="$(printf '%s\n' "$signer_info" |
-            awk 'tolower($0) ~ /certificate sha-256 digest/ {print $NF; exit}' |
-            tr '[:upper:]' '[:lower:]' | tr -d '\r' || true)"
-          if [[ "${actual_cert,,}" != "$expected_cert" && "${actual_cert,,}" != "$expected_cert_alt" ]]; then
-            echo "::error::APK signer does not match either pinned Google Messages certificate"
+          signer_digests="$(printf '%s\n' "$signer_info" |
+            awk 'tolower($0) ~ /v[0-9.]+ signer:.*certificate sha-256 digest:/ {print tolower($NF)}')"
+          echo "Verified APK signer fingerprints (Google key rotation supported):"
+          printf '%s\n' "$signer_digests"
+          if ! printf '%s\n' "$signer_digests" | grep -Fxq "$expected_cert" &&
+             ! printf '%s\n' "$signer_digests" | grep -Fxq "$expected_cert_alt"; then
+            echo "::error::None of the APK signers matches our trusted Google Messages certificates"
             exit 1
           fi
           echo "Verified Google Messages APK package and signing certificate."
