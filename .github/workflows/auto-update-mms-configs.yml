@@ -1,17 +1,23 @@
-name: Auto-Update MMS configs
+name: SynAck SMS - One-Time MMS Config Refresh
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 0 1 1,4,7,10 *'
+    inputs:
+      refresh_mms_configs:
+        description: 'Run ONE manual MMS config refresh from Google Messages and open a review PR?'
+        required: true
+        type: boolean
+        default: false
 
 concurrency:
-  group: auto-update-mms-configs
+  group: one-time-mms-configs
   cancel-in-progress: false
 
 jobs:
-  vvm:
-    runs-on: ubuntu-latest
+  refresh:
+    if: ${{ inputs.refresh_mms_configs == true }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
     permissions:
       contents: write
       pull-requests: write
@@ -56,35 +62,44 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends aapt apktool unzip
           
-      - name: Download Messaging APK 
-        run: apkeep -a com.google.android.apps.messaging /home/runner/work/quik/quik
-
-      - name: List files in directory
-        run: ls /home/runner/work/quik/quik
-
-      - name: Unzip the Messaging APK from XAPK
+      - name: Download Google Messages APK to temporary runner folder
         shell: bash
         run: |
-          if [ -f /home/runner/work/quik/quik/com.google.android.apps.messaging.xapk ]; then
-            unzip /home/runner/work/quik/quik/com.google.android.apps.messaging.xapk -d /home/runner/work/quik/quik
-          else
-            echo "XAPK file not found, skipping unzip."
-          fi
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/synack-mms-apk"
+          apkeep -a com.google.android.apps.messaging "$RUNNER_TEMP/synack-mms-apk"
+          find "$RUNNER_TEMP/synack-mms-apk" -maxdepth 2 -type f -printf '%p\n'
 
-      - name: Decompile Messaging using apktool
-        run: apktool d com.google.android.apps.messaging.apk -o dump
-        
-      - name: Copy MMS configs
+      - name: Extract MMS config resources (no APK checked into repo)
         shell: bash
         run: |
           set -euo pipefail
           shopt -s nullglob
-          rm -rfv android-smsmms/src/main/res/xml-mcc*
-          source_dirs=(dump/res/xml-mcc*)
-          if [[ "${#source_dirs[@]}" -eq 0 ]]; then
-            echo "No MMS config directories found in dump." >&2
+          download_dir="$RUNNER_TEMP/synack-mms-apk"
+          for archive in "$download_dir"/*.xapk; do
+            unzip -oq "$archive" -d "$download_dir/extracted"
+          done
+          apk="$download_dir/com.google.android.apps.messaging.apk"
+          if [[ ! -f "$apk" ]]; then
+            apk="$(find "$download_dir" -type f -name base.apk -print -quit)"
+          fi
+          if [[ -z "$apk" || ! -f "$apk" ]]; then
+            apk="$(find "$download_dir" -type f -name '*.apk' -print -quit)"
+          fi
+          if [[ -z "$apk" || ! -f "$apk" ]]; then
+            echo "::error::No APK found from Google Messages download"
             exit 1
           fi
+
+          apktool d -f "$apk" -o "$RUNNER_TEMP/synack-mms-decompiled"
+
+          source_dirs=("$RUNNER_TEMP/synack-mms-decompiled/res"/xml-mcc*)
+          if [[ "${#source_dirs[@]}" -eq 0 ]] || ! find "${source_dirs[@]}" -type f -name mms_config.xml -print -quit | grep -q .; then
+            echo "::error::No carrier MMS config files extracted; existing configs left untouched"
+            exit 1
+          fi
+
+          rm -rf android-smsmms/src/main/res/xml-mcc*
           cp -rv "${source_dirs[@]}" android-smsmms/src/main/res/
           find android-smsmms/src/main/res/xml-mcc* -name '*_config_override.xml' -print -delete
 
@@ -115,8 +130,12 @@ jobs:
           author: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
           title: "Update MMS configs"
           body: |
-            This pull request updates the MMS configurations to the latest version. 
-              - Updated by [Auto-Update MMS configs](./.github%2Fworkflows%2Fauto-update-mms-configs.yml)
+            Manually requested one-time extraction of carrier MMS configs from Google Messages.
+
+            Review these carrier configuration changes before merging. There is no
+            scheduled refresh, no on-device Google APK downloader, and no automatic merge.
+
+            Source workflow: .github/workflows/auto-update-mms-configs.yml
           add-paths: android-smsmms/src/main/res/xml-mcc*
           branch: ${{ env.NEW_BRANCH }}
           base: master
