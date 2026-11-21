@@ -1,5 +1,4 @@
 name: SynAck SMS - One-Time MMS Config Refresh
-# One-time import requested from current master; do not enable scheduled execution.
 
 on:
   workflow_dispatch:
@@ -13,7 +12,7 @@ on:
   # This trigger will be removed after the import run.
   push:
     branches: [master]
-    paths: ['.github/workflows/auto-update-mms-configs.yml']
+    paths: ['.github/workflows/synack-mms-import.yml']
 
 concurrency:
   group: one-time-mms-configs
@@ -141,7 +140,7 @@ jobs:
             Review these carrier configuration changes before merging. There is no
             scheduled refresh, no on-device Google APK downloader, and no automatic merge.
 
-            Source workflow: .github/workflows/auto-update-mms-configs.yml
+            Source workflow: .github/workflows/synack-mms-import.yml
           add-paths: android-smsmms/src/main/res/xml-mcc*
           branch: ${{ env.NEW_BRANCH }}
           base: master
