@@ -119,8 +119,11 @@ jobs:
             exit 1
           fi
           signer_info="$("$signer" verify --print-certs "$apk")"
-          actual_cert="$(printf '%s\n' "$signer_info" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p' | head -n1)"
-          echo "Observed APK signing certificate SHA-256: $actual_cert"
+          # Only public certificate metadata is printed, to diagnose signer parsing safely.
+          printf '%s\n' "$signer_info"
+          actual_cert="$(printf '%s\n' "$signer_info" |
+            awk 'tolower($0) ~ /certificate sha-256 digest/ {print $NF; exit}' |
+            tr '[:upper:]' '[:lower:]' | tr -d '\r' || true)"
           if [[ "${actual_cert,,}" != "$expected_cert" && "${actual_cert,,}" != "$expected_cert_alt" ]]; then
             echo "::error::APK signer does not match either pinned Google Messages certificate"
             exit 1
