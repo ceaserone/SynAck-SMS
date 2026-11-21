@@ -788,6 +788,9 @@ class ComposeActivity : QkThemedActivity(), ComposeView {
                         if (SecureSms.isVerified(address))
                             getString(R.string.secure_chat_menu_active)
                         else getString(R.string.secure_chat_menu)
+                    // A just-verified conversation can now decrypt existing ciphertext
+                    // without waiting for a new Realm data-change notification.
+                    messageAdapter.notifyDataSetChanged()
                 }
             }
             return true
